@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { toast } from 'react-toastify';
 import { useDispatch, useSelector } from 'react-redux'
-import { addToAllTdodos, addToInProgressTodos, addToNewTodos, removeToNewTodos } from '../features/todos/todosSlice';
+import { addToAllTdodos, addToCompletedTodos, addToInProgressTodos, addToNewTodos } from '../features/todos/todosSlice';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { Draggable } from '@hello-pangea/dnd';
 
@@ -19,10 +19,15 @@ const Todo = () => {
             toast.error("Please write your task");
             return;
         }
-        dispatch(addToNewTodos({ id: newTodos.length === 0 ? 0 : (newTodos[newTodos.length - 1].id) + 1,
-             value: todo }));
-        dispatch(addToAllTdodos({ id: allTdodos.length === 0 ? 0 : (allTdodos[allTdodos.length - 1].id) + 1,
-             value: todo }));
+        dispatch(addToNewTodos([...newTodos,{
+            id: newTodos.length === 0 ? 0 : (newTodos[newTodos.length - 1].id) + 1,
+            value: todo
+        }]));
+    
+        dispatch(addToAllTdodos({
+            id: allTdodos.length === 0 ? 0 : (allTdodos[allTdodos.length - 1].id) + 1,
+            value: todo
+        }));
 
         setTodo("");
         toast.success("Task added successfully !");
@@ -30,25 +35,72 @@ const Todo = () => {
 
     const onDragEndHandler = (result) => {
         const { destination, source, draggableId } = result;
-        console.log(destination);
-        console.log(source);
+        console.log(destination, "destination");
+        console.log(source, "source");
+        // console.log(result, "result");
         if (destination && source) {
 
             if (source.droppableId === "newTodosList" && destination.droppableId === "completedTodosList") {
-               
+
             }
             if (source.droppableId === "newTodosList" && destination.droppableId === "inProgressTodosList") {
-                const currentItem = newTodos.find((todo) => todo.id === parseInt(source.index));
-                console.log(currentItem, "currentItem");
-                dispatch(addToInProgressTodos({destinationIndex:destination?.index ?? null, data:currentItem}));
-                dispatch(removeToNewTodos(currentItem.id));
 
+                let sourceTodos = JSON.parse(JSON.stringify(newTodos));
+                console.log(sourceTodos, "sourceTodos");
+                let destinationTodos = JSON.parse(JSON.stringify(inProgressTodos));
+                let add = sourceTodos[source.index];
+                console.log(add, "add");
+                sourceTodos.splice(source.index, 1);
+
+                destinationTodos.splice(destination.index, 0, add);
+
+                dispatch(addToInProgressTodos(destinationTodos));
+                dispatch(addToNewTodos(sourceTodos));
+                
+    
+            }
+            if (source.droppableId === "inProgressTodosList" && destination.droppableId === "newTodosList") {
+                 
+                    let sourceTodos = JSON.parse(JSON.stringify(inProgressTodos));
+                    console.log(sourceTodos, "sourceTodos");
+                    let destinationTodos = JSON.parse(JSON.stringify(newTodos));
+                    let add = sourceTodos[source.index];
+                    console.log(add, "add");
+                    sourceTodos.splice(source.index, 1);
+    
+                    destinationTodos.splice(destination.index, 0, add);
+    
+                    dispatch(addToInProgressTodos(sourceTodos));
+                    dispatch(addToNewTodos(destinationTodos));
             }
             if (source.droppableId === "inProgressTodosList" && destination.droppableId === "completedTodosList") {
+                let sourceTodos = JSON.parse(JSON.stringify(inProgressTodos));
+                console.log(sourceTodos, "sourceTodos");
+                let destinationTodos = JSON.parse(JSON.stringify(completedTodos));
+                let add = sourceTodos[source.index];
+                console.log(add, "add");
+                sourceTodos.splice(source.index, 1);
 
+                destinationTodos.splice(destination.index, 0, add);
+
+                dispatch(addToInProgressTodos(sourceTodos));
+                dispatch(addToCompletedTodos(destinationTodos));
+            }
+            if (source.droppableId === "completedTodosList" && destination.droppableId === "inProgressTodosList") {
+                let sourceTodos = JSON.parse(JSON.stringify(completedTodos));
+                console.log(sourceTodos, "sourceTodos");
+                let destinationTodos = JSON.parse(JSON.stringify(inProgressTodos));
+                let add = sourceTodos[source.index];
+                console.log(add, "add");
+                sourceTodos.splice(source.index, 1);
+
+                destinationTodos.splice(destination.index, 0, add);
+
+                dispatch(addToInProgressTodos(destinationTodos));
+                dispatch(addToCompletedTodos(sourceTodos));
             }
         }
-        
+
     }
 
 
@@ -76,7 +128,7 @@ const Todo = () => {
                                     <div className='p-2' ref={provided.innerRef} {...provided.droppableProps}>
                                         {
                                             newTodos.map((todo, index) => (
-                                                <Draggable draggableId={todo.id.toString()} index={todo.id} key={todo.id}>
+                                                <Draggable draggableId={todo?.id.toString()+'newTodosList'} index={index} key={todo?.id+'newTodosListx'}>
                                                     {(provided) => (
                                                         <div className='py-2'  {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
                                                             <p className='secondary-bg text-dark text-center mb-0 p-1 border border-secondary'>{todo.value}</p>
@@ -101,7 +153,7 @@ const Todo = () => {
                                     <div className='p-2' ref={provided.innerRef} {...provided.droppableProps}>
                                         {
                                             inProgressTodos.map((todo, index) => (
-                                                <Draggable draggableId={todo.id.toString()} index={todo.id} key={todo.id}>
+                                                <Draggable draggableId={todo?.id.toString()+'inProgressTodosList'} index={index} key={todo?.id+'inProgressTodosList'}>
                                                     {(provided) => (
                                                         <div className='py-2'  {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
                                                             <p className='secondary-bg text-dark text-center mb-0 p-1 border border-secondary'>{todo.value}</p>
@@ -126,7 +178,7 @@ const Todo = () => {
                                     <div className='p-2' ref={provided.innerRef} {...provided.droppableProps}>
                                         {
                                             completedTodos.map((todo, index) => (
-                                                <Draggable draggableId={todo.id.toString()} index={todo.id} key={todo.id}>
+                                                <Draggable draggableId={todo?.id.toString()+'completedTodosList'} index={index} key={todo?.id+'completedTodosList'}>
                                                     {(provided) => (
                                                         <div className='py-2'  {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
                                                             <p className='secondary-bg text-dark text-center mb-0 p-1 border border-secondary'>{todo.value}</p>
