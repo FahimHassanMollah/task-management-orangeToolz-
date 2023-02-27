@@ -28,10 +28,10 @@ const Todo = () => {
             value: todo
         }]));
 
-        dispatch(addToAllTodos({
+        dispatch(addToAllTodos([...allTodos, {
             id: allTodos.length === 0 ? 0 : (allTodos[allTodos.length - 1].id) + 1,
             value: todo
-        }));
+        }]));
 
         localStorage.setItem("allTodos", JSON.stringify([...allTodos, {
             id: allTodos.length === 0 ? 0 : (allTodos[allTodos.length - 1].id) + 1,
@@ -42,20 +42,24 @@ const Todo = () => {
         toast.success("Task added successfully !");
     }
     useEffect(() => {
-       let existingCompletedTodos = localStorage.getItem("allTodos");
-       if (completedTodos) {
+        let existingCompletedTodos = localStorage.getItem("completedTodos");
+        if (existingCompletedTodos) {
             dispatch(addToCompletedTodos(JSON.parse(existingCompletedTodos)));
-       }
+        }
         let existingNewTodos = localStorage.getItem("newTodos");
         if (existingNewTodos) {
             dispatch(addToNewTodos(JSON.parse(existingNewTodos)));
         }
-    
-      return () => {
-        
-      }
+        let existingInProgressTodos = localStorage.getItem("inProgressTodos");
+        if (existingInProgressTodos) {
+            dispatch(addToInProgressTodos(JSON.parse(existingInProgressTodos)));
+        }
+        let existingAllTodos = localStorage.getItem("allTodos");
+        if (existingAllTodos) {
+            dispatch(addToAllTodos(JSON.parse(existingAllTodos)));
+        }
     }, [])
-    
+
 
     const onDragEndHandler = (result) => {
         const { destination, source } = result;
@@ -132,7 +136,7 @@ const Todo = () => {
                 dispatch(addToInProgressTodos(destinationTodos));
                 dispatch(addToNewTodos(sourceTodos));
 
-                localStorage.setItem("inProgressTodosList", JSON.stringify(destinationTodos));
+                localStorage.setItem("inProgressTodos", JSON.stringify(destinationTodos));
                 localStorage.setItem("newTodos", JSON.stringify(sourceTodos));
             }
             if (source.droppableId === "inProgressTodosList" && destination.droppableId === "newTodosList") {
@@ -158,7 +162,7 @@ const Todo = () => {
                 dispatch(addToInProgressTodos(sourceTodos));
                 dispatch(addToCompletedTodos(destinationTodos));
 
-                localStorage.setItem("inProgressTodosList", JSON.stringify(sourceTodos));
+                localStorage.setItem("inProgressTodos", JSON.stringify(sourceTodos));
                 localStorage.setItem("completedTodos", JSON.stringify(destinationTodos));
             }
             if (source.droppableId === "completedTodosList" && destination.droppableId === "inProgressTodosList") {
@@ -171,7 +175,7 @@ const Todo = () => {
                 dispatch(addToInProgressTodos(destinationTodos));
                 dispatch(addToCompletedTodos(sourceTodos));
 
-                localStorage.setItem("inProgressTodosList", JSON.stringify(destinationTodos));
+                localStorage.setItem("inProgressTodos", JSON.stringify(destinationTodos));
                 localStorage.setItem("completedTodos", JSON.stringify(sourceTodos));
             }
         }
